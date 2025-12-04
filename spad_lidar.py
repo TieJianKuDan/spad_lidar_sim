@@ -114,7 +114,7 @@ class SPAD_LiDAR:
     def calc_tof(self, depth):
         return (depth.astype(cp.float64) * 2) / self.c_speed
 
-    def take_a_frame(self, ref, depth):
+    def record_a_frame_clicks(self, ref, depth):
         depth = self.crop_from_center(cp.asarray(depth))
         h, w = depth.shape
         Ppp, Cbkg = self.calc_liklyhood(ref, depth)
@@ -124,3 +124,19 @@ class SPAD_LiDAR:
             for j in tqdm(range(w), leave=False):
                 all_clicks[i, j] = self.calc_all_clicks(tof[i, j], Ppp[i, j], Cbkg[i, j])
         return all_clicks
+    
+    def calc_freqency(self, clicks):
+        clicks += 1
+        h, w, _ = clicks.shape
+        freq = cp.zeros((h, w, self.bins))
+        for i in tqdm(range(h)):
+            for j in tqdm(range(w), leave=False):
+                freq[i, j] = cp.bincount(clicks[i, j].astype(cp.int32), minlength=self.bins + 1)[1:]
+        return freq
+
+    def calc_depth(self, freq, algo="argmax"):
+        if algo == "argmax":
+            tof = (freq.argmax(axis=-1) + 0.5) * self.t_res
+            return (tof / 2) * self.c_speed
+        else:
+            raise ValueError(f"Unsupported algorithm: {algo}")

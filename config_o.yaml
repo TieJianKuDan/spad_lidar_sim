@@ -21,4 +21,4 @@ RX:
     q_efficiency: 0.18
     effictive_pix_size: [9.2e-6, 9.2e-6]
     dcr: 126
-    img_res: [64, 64]
+    img_res: [2, 2]
