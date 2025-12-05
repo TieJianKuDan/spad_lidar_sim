@@ -1,0 +1,24 @@
+jitter: 220e-12
+bkg_lux: 5e3
+
+TX:
+  laser:
+    rep_rate: 2.25e6
+    energy_p_pulse: 1.219e-9
+    pulse_fwhm: 0.6e-9
+    fibre_core: 550e-6
+    illum_lens: 8e-3
+    wavelength: 671e-9
+
+RX:
+  camera:
+    f_num: 2.0
+
+  sensor:
+    bins: 1024
+    fps: 30
+    depth_range: [0, 50]
+    q_efficiency: 0.18
+    effictive_pix_size: [9.2e-6, 9.2e-6]
+    dcr: 126
+    img_res: [8, 8]
