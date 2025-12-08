@@ -15,7 +15,8 @@ RX:
     f_num: 2.0
 
   sensor:
-    bins: 1024
+    t_res: 50e-12
+    tdc_bins: 1024
     fps: 30
     depth_range: [0, 50]
     q_efficiency: 0.18

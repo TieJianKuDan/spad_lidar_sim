@@ -14,7 +14,7 @@ from simulator.spad_lidar import SPAD_LiDAR
 if __name__ == "__main__":
     
     # depth_img = load_depth("rgbd.png")
-    depth_img = np.ones((8, 8))*3
+    depth_img = np.ones((8, 8))*9
     config = OmegaConf.load("configs/config.yaml")
     sensor_cfg = config.RX.sensor
     camera_cfg = config.RX.camera
@@ -30,7 +30,7 @@ if __name__ == "__main__":
     depth_ =  lidar.calc_depth(freq, "argmax")
     depth = lidar.crop_from_center(depth_img)
     print(np.abs(depth_.get() - depth).mean())
-    plt.bar(np.arange(lidar.bins), freq[0, 0].get())
+    plt.bar(np.arange(lidar.tdc_bins), freq[0, 0].get())
     plt.show()
     
     # h, w, p = clicks.shape

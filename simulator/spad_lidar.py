@@ -1,3 +1,5 @@
+from math import ceil
+
 from tqdm import tqdm
 
 try:
@@ -30,19 +32,18 @@ class SPAD_LiDAR:
         self.photos_p_pulse = (self.wavelength * self.energy_p_pulse) / (self.plank * self.c_speed)
 
         self.f_num = camera_cfg.f_num
-        self.bins = sensor_cfg.bins
-        self.t_res = sensor_cfg.t_res
-        self.fps = sensor_cfg.fps
         self.depth_range = sensor_cfg.depth_range
+        self.tdc_bins = sensor_cfg.tdc_bins
+        self.tdc_t_res = ((self.depth_range[1] - self.depth_range[0]) * 2 / self.c_speed) / self.tdc_bins
+        self.t_res = sensor_cfg.t_res
+        self.bins = ceil(((self.depth_range[1] - self.depth_range[0]) * 2 / self.c_speed) / self.t_res)
+        self.fps = sensor_cfg.fps
         self.q_efficiency = sensor_cfg.q_efficiency
         self.effictive_pix_size = sensor_cfg.effictive_pix_size
         self.dcr = sensor_cfg.dcr
         self.img_res = sensor_cfg.img_res
-
-        self.t_res = ((self.depth_range[1] - self.depth_range[0]) * 2 / self.c_speed) / self.bins
         self.bin1_t = self.depth_range[0] * 2 / self.c_speed
         self.pulse_per_frame = int((1 / self.fps) * self.rep_rate)
-
 
     def estimate_irradiance(self, illuminance, wavelength, bandwidth=10):
         AM15G_REF_ILLUMINANCE = 120e3
@@ -96,6 +97,10 @@ class SPAD_LiDAR:
         trials = cp.ones((self.pulse_per_frame, self.bins), dtype=int)
         clicks = cp.random.binomial(trials, bino_prob, dtype=cp.float32)
         clicks = self.first_nonzero(clicks, axis=1, invalid_val=-1)
+        mask = clicks == -1
+        clicks = ((clicks + 0.5) * self.t_res / self.tdc_t_res).astype(cp.int32)
+        clicks[clicks >= self.tdc_bins] = self.tdc_bins - 1
+        clicks[mask] = -1
         return clicks
 
     def crop_from_center(self, depth):
@@ -127,18 +132,18 @@ class SPAD_LiDAR:
     
     def calc_freqency(self, clicks):
         h, w, _ = clicks.shape
-        freq = cp.zeros((h, w, self.bins))
+        freq = cp.zeros((h, w, self.tdc_bins))
         for i in tqdm(range(h)):
             for j in tqdm(range(w), leave=False):
-                freq[i, j] = cp.bincount(clicks[i, j].astype(cp.int32) + 1, minlength=self.bins + 1)[1:]
+                freq[i, j] = cp.bincount(clicks[i, j].astype(cp.int32) + 1, minlength=self.tdc_bins + 1)[1:]
         return freq
 
     def calc_depth(self, freq, algo="argmax"):
         if algo == "argmax":
-            tof = (freq.argmax(axis=-1) + 0.5) * self.t_res + self.bin1_t
+            tof = (freq.argmax(axis=-1) + 0.5) * self.tdc_t_res + self.bin1_t
             return (tof / 2) * self.c_speed
         elif algo == "centroid":
-            t_bin = (cp.linspace(0, self.bins - 1, self.bins) + 0.5) * self.t_res + self.bin1_t
+            t_bin = (cp.linspace(0, self.bins - 1, self.bins) + 0.5) * self.tdc_t_res + self.bin1_t
             tof = cp.sum((t_bin[None, None, :] * freq), axis=-1) / cp.sum(freq, axis=-1)
             return (tof / 2) * self.c_speed
         else:
