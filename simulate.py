@@ -7,7 +7,7 @@ from tqdm import tqdm
 
 sys.path.append(".")
 
-from algorithms.freq_estimate import SpaceSaving
+from algorithms.sse import SpaceSaving
 from dataset.utils import load_depth
 from simulator.spad_lidar import SPAD_LiDAR
 

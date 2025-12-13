@@ -65,14 +65,14 @@ class SPAD_LiDAR:
     def calc_attenuation(self, ref, depth):
         illum_radius = ((depth / self.illum_lens) * self.fibre_core) / 2.0
         illum_area = cp.pi*(illum_radius) ** 2
-        attenuation1 = self.q_efficiency * ref * (self.C_atm ** (2 * depth)) / 8
+        attenuation1 = self.q_efficiency * ref / 8
         attenuation2 = (self.effictive_pix_size[0] * self.effictive_pix_size[1]) / (illum_area * (self.f_num ** 2))
         return attenuation1 * attenuation2, illum_area
 
     def calc_liklyhood(self, ref, depth):
         attenuation, illum_area = self.calc_attenuation(ref, depth)
-        Ppp = self.photos_p_pulse * attenuation
-        Cbkg = self.photos_bkg * attenuation * illum_area
+        Ppp = self.photos_p_pulse * attenuation * (self.C_atm ** (2 * depth)) 
+        Cbkg = self.photos_bkg * attenuation * illum_area * (self.C_atm ** (depth))
         return Ppp, Cbkg
 
     def first_nonzero(self, arr, axis, invalid_val=-1):

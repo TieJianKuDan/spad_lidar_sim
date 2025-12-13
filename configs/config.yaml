@@ -18,7 +18,7 @@ RX:
     t_res: 50e-12
     tdc_bins: 1024
     fps: 30
-    depth_range: [0, 50]
+    depth_range: [0, 10]
     q_efficiency: 0.18
     effictive_pix_size: [9.2e-6, 9.2e-6]
     dcr: 126
